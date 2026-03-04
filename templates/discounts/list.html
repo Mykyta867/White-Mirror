@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Знижки — Dental CRM{% endblock %}
+{% block page_title %}Знижки{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary" onclick="openModal('addDiscountModal')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Нова знижка
+  </button>
+{% endblock %}
+
+{% block content %}
+
+<div class="discounts-grid">
+  {% for discount in discounts %}
+  <div class="discount-card {% if not discount.is_active %}inactive{% endif %}">
+    <div class="flex items-center justify-between" style="margin-bottom:8px;">
+      {% if discount.is_active %}
+        <span class="badge badge-active">Активна</span>
+      {% else %}
+        <span class="badge badge-inactive">Неактивна</span>
+      {% endif %}
+      <span class="badge badge-neutral">
+        {% if discount.discount_type == 'percentage' %}Відсоток{% else %}Фіксована{% endif %}
+      </span>
+    </div>
+
+    <div class="discount-value">{{ discount.display_value }}</div>
+    <div class="discount-name">{{ discount.name }}</div>
+
+    {% if discount.description %}
+    <div class="discount-desc">{{ discount.description }}</div>
+    {% endif %}
+
+    {% if discount.valid_from or discount.valid_to %}
+    <div class="discount-validity">
+      📅
+      {% if discount.valid_from %}з {{ discount.valid_from|date:"d.m.Y" }}{% endif %}
+      {% if discount.valid_to %}до {{ discount.valid_to|date:"d.m.Y" }}{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="discount-footer">
+      <span class="text-sm text-muted">Додано {{ discount.created_at|date:"d.m.Y" }}</span>
+      <div class="flex gap-2">
+        <form method="post" action="{% url 'discount_toggle' discount.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm {% if discount.is_active %}btn-outline{% else %}btn-success{% endif %}">
+            {% if discount.is_active %}Деактивувати{% else %}Активувати{% endif %}
+          </button>
+        </form>
+        <form method="post" action="{% url 'discount_delete' discount.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-icon danger" data-confirm="Видалити знижку «{{ discount.name }}»?">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div style="grid-column:1/-1;">
+    <div class="empty-state">
+      <div class="empty-icon">🏷️</div>
+      <div class="empty-title">Знижок ще немає</div>
+      <div class="empty-text">Натисніть "Нова знижка" щоб додати першу</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<div class="modal-overlay" id="addDiscountModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Нова знижка</span>
+      <button class="modal-close" onclick="closeModal('addDiscountModal')">✕</button>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group form-full">
+            <label class="form-label">Назва знижки <span>*</span></label>
+            {{ form.name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Тип знижки <span>*</span></label>
+            {{ form.discount_type }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Розмір <span>*</span></label>
+            {{ form.value }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Діє з</label>
+            {{ form.valid_from }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Діє до</label>
+            {{ form.valid_to }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Опис</label>
+            {{ form.description }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display:flex; align-items:center; gap:8px;">
+              {{ form.is_active }} Активна
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addDiscountModal')">Скасувати</button>
+        <button type="submit" class="btn btn-primary">Зберегти знижку</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

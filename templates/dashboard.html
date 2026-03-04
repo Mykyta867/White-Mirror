@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Головна — Dental CRM{% endblock %}
+
+{% block page_title %}Головна{% endblock %}
+
+{% block topbar_actions %}
+  <span class="text-sm text-muted">
+    {% now "j E Y" %}
+  </span>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">👥</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_patients }}</div>
+      <div class="stat-label">Пацієнтів</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">👨‍⚕️</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_doctors }}</div>
+      <div class="stat-label">Лікарів</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">📅</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ today_appointments }}</div>
+      <div class="stat-label">Записів сьогодні</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple">⏳</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ pending_appointments }}</div>
+      <div class="stat-label">Очікують прийому</div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Appointments -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Останні записи</span>
+    <a href="{% url 'appointment_list' %}" class="btn btn-outline btn-sm">Усі записи →</a>
+  </div>
+
+  {% if recent_appointments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Пацієнт</th>
+          <th>Лікар</th>
+          <th>Послуга</th>
+          <th>Дата</th>
+          <th>Час</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in recent_appointments %}
+        <tr>
+          <td>
+            <div class="td-name">
+              <div class="avatar">{{ appt.patient.first_name|slice:":1" }}{{ appt.patient.last_name|slice:":1" }}</div>
+              <div>
+                <div class="name-primary">{{ appt.patient.full_name }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="name-primary">{{ appt.doctor.initials_name }}</div>
+            <div class="name-secondary">{{ appt.doctor.get_specialization_display }}</div>
+          </td>
+          <td>{{ appt.service.name }}</td>
+          <td>{{ appt.date|date:"d.m.Y" }}</td>
+          <td>{{ appt.time|time:"H:i" }}</td>
+          <td>
+            {% if appt.status == 'completed' %}
+              <span class="badge badge-success">Завершено</span>
+            {% elif appt.status == 'pending' %}
+              <span class="badge badge-warning">Очікує</span>
+            {% elif appt.status == 'in_progress' %}
+              <span class="badge badge-info">В процесі</span>
+            {% else %}
+              <span class="badge badge-neutral">Скасовано</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <div class="empty-title">Записів ще немає</div>
+    <div class="empty-text">Додайте першого пацієнта і запишіть його на прийом</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

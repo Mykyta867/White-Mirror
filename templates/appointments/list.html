@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Записи — Dental CRM{% endblock %}
+{% block page_title %}Записи{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary" onclick="openModal('addAppointmentModal')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Новий запис
+  </button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="flex items-center gap-2 mb-4">
+  <span class="text-sm text-muted" style="margin-right:4px;">Статус:</span>
+  <div class="filter-bar">
+    <a href="{% url 'appointment_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">Усі</a>
+    <a href="?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Очікують</a>
+    <a href="?status=in_progress" class="filter-btn {% if status_filter == 'in_progress' %}active{% endif %}">В процесі</a>
+    <a href="?status=completed" class="filter-btn {% if status_filter == 'completed' %}active{% endif %}">Завершені</a>
+    <a href="?status=cancelled" class="filter-btn {% if status_filter == 'cancelled' %}active{% endif %}">Скасовані</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      Список записів
+      <span style="font-weight:400; color:var(--text-muted); font-size:13px; margin-left:6px;">({{ appointments|length }})</span>
+    </span>
+  </div>
+
+  {% if appointments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Пацієнт</th>
+          <th>Лікар</th>
+          <th>Послуга</th>
+          <th>Дата</th>
+          <th>Час</th>
+          <th>Вартість</th>
+          <th>Статус</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in appointments %}
+        <tr>
+          <td>
+            <div class="td-name">
+              <div class="avatar">{{ appt.patient.first_name|slice:":1" }}{{ appt.patient.last_name|slice:":1" }}</div>
+              <div>
+                <a href="{% url 'patient_detail' appt.patient.pk %}" style="text-decoration:none;">
+                  <div class="name-primary" style="color:var(--primary);">{{ appt.patient.full_name }}</div>
+                </a>
+                <div class="name-secondary">{{ appt.patient.phone }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="name-primary">{{ appt.doctor.initials_name }}</div>
+            <div class="name-secondary">{{ appt.doctor.get_specialization_display }}</div>
+          </td>
+          <td>{{ appt.service.name }}</td>
+          <td>{{ appt.date|date:"d.m.Y" }}</td>
+          <td>{{ appt.time|time:"H:i" }}</td>
+          <td>
+            <div class="name-primary">{{ appt.final_price }} грн</div>
+            {% if appt.discount %}
+              <div class="name-secondary">-{{ appt.discount.display_value }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if appt.status == 'completed' %}
+              <span class="badge badge-success">Завершено</span>
+            {% elif appt.status == 'pending' %}
+              <span class="badge badge-warning">Очікує</span>
+            {% elif appt.status == 'in_progress' %}
+              <span class="badge badge-info">В процесі</span>
+            {% else %}
+              <span class="badge badge-neutral">Скасовано</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="td-actions">
+              <form method="post" action="{% url 'appointment_update_status' appt.pk %}" style="display:flex; align-items:center;">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()" class="form-input" style="padding:5px 8px; font-size:12px; width:auto; min-width:120px;">
+                  {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if appt.status == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+              <form method="post" action="{% url 'appointment_delete' appt.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-icon danger" data-confirm="Видалити цей запис?" title="Видалити">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <div class="empty-title">Записів не знайдено</div>
+    <div class="empty-text">{% if status_filter %}Спробуйте змінити фільтр{% else %}Натисніть "Новий запис" щоб створити перший{% endif %}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<div class="modal-overlay" id="addAppointmentModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">Новий запис</span>
+      <button class="modal-close" onclick="closeModal('addAppointmentModal')">✕</button>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Пацієнт <span>*</span></label>
+            {{ form.patient }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Лікар <span>*</span></label>
+            {{ form.doctor }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Послуга <span>*</span></label>
+            {{ form.service }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Дата <span>*</span></label>
+            {{ form.date }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Час <span>*</span></label>
+            {{ form.time }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Знижка</label>
+            {{ form.discount }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Статус</label>
+            {{ form.status }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Примітки</label>
+            {{ form.notes }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addAppointmentModal')">Скасувати</button>
+        <button type="submit" class="btn btn-primary">Зберегти запис</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

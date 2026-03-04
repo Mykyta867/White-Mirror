@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Пацієнти — Dental CRM{% endblock %}
+{% block page_title %}Пацієнти{% endblock %}
+
+{% block topbar_actions %}
+  <form class="search-wrap" method="get">
+    <span class="search-icon">🔍</span>
+    <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="Пошук пацієнта...">
+  </form>
+  <button class="btn btn-primary" onclick="openModal('addPatientModal')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Новий пацієнт
+  </button>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      Усі пацієнти
+      <span style="font-weight:400; color:var(--text-muted); font-size:13px; margin-left:6px;">({{ patients|length }})</span>
+    </span>
+    {% if q %}
+      <a href="{% url 'patient_list' %}" class="btn btn-outline btn-sm">✕ Скинути пошук</a>
+    {% endif %}
+  </div>
+
+  {% if patients %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ПІБ</th>
+          <th>Телефон</th>
+          <th>Email</th>
+          <th>Остання дата візиту</th>
+          <th>Кількість візитів</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in patients %}
+        <tr>
+          <td>
+            <div class="td-name">
+              <div class="avatar {% cycle 'blue' 'green' 'orange' 'purple' 'pink' %}">
+                {{ patient.first_name|slice:":1" }}{{ patient.last_name|slice:":1" }}
+              </div>
+              <div>
+                <div class="name-primary">{{ patient.full_name }}</div>
+                {% if patient.date_of_birth %}
+                  <div class="name-secondary">{{ patient.date_of_birth|date:"d.m.Y" }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td>
+            <a href="tel:{{ patient.phone }}" style="color:var(--primary); text-decoration:none; font-weight:500;">
+              {{ patient.phone }}
+            </a>
+          </td>
+          <td>
+            {% if patient.email %}
+              <span class="text-sm">{{ patient.email }}</span>
+            {% else %}
+              <span class="text-muted text-sm">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if patient.last_visit %}
+              <span class="text-sm">{{ patient.last_visit|date:"d.m.Y" }}</span>
+            {% else %}
+              <span class="text-muted text-sm">Ще не було</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if patient.visit_count > 0 %}badge-success{% else %}badge-neutral{% endif %}">
+              {{ patient.visit_count }} візитів
+            </span>
+          </td>
+          <td>
+            <div class="td-actions">
+              <a href="{% url 'patient_detail' patient.pk %}" class="btn-icon" title="Переглянути">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+              <a href="{% url 'patient_edit' patient.pk %}" class="btn-icon" title="Редагувати">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </a>
+              <form method="post" action="{% url 'patient_delete' patient.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-icon danger" data-confirm="Видалити пацієнта {{ patient.full_name }}?" title="Видалити">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">👥</div>
+    <div class="empty-title">{% if q %}Пацієнтів не знайдено{% else %}Список пацієнтів порожній{% endif %}</div>
+    <div class="empty-text">{% if q %}Спробуйте змінити пошуковий запит{% else %}Натисніть "Новий пацієнт" щоб додати першого{% endif %}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Add Patient Modal -->
+<div class="modal-overlay" id="addPatientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Новий пацієнт</span>
+      <button class="modal-close" onclick="closeModal('addPatientModal')">✕</button>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Прізвище <span>*</span></label>
+            {{ form.last_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ім'я <span>*</span></label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">По батькові</label>
+            {{ form.patronymic }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Телефон <span>*</span></label>
+            {{ form.phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Дата народження</label>
+            {{ form.date_of_birth }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Адреса</label>
+            {{ form.address }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Примітки</label>
+            {{ form.notes }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addPatientModal')">Скасувати</button>
+        <button type="submit" class="btn btn-primary">Зберегти пацієнта</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

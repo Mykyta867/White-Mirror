@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Розклад — Dental CRM{% endblock %}
+{% block page_title %}Розклад{% endblock %}
+
+{% block topbar_actions %}
+  <div class="flex items-center gap-2">
+    <a href="?week={{ prev_offset }}" class="btn btn-outline btn-sm">← Попередній</a>
+    <span style="font-size:14px; font-weight:600; color:var(--text-secondary); padding:0 8px;">
+      {{ week_start|date:"d.m" }} — {{ week_end|date:"d.m.Y" }}
+    </span>
+    <a href="?week={{ next_offset }}" class="btn btn-outline btn-sm">Наступний →</a>
+    {% if offset != 0 %}
+      <a href="?" class="btn btn-primary btn-sm">Поточний тиждень</a>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+
+<div class="card" style="overflow:visible;">
+  <div class="schedule-grid">
+    {% for day, appts in schedule_data.items %}
+    <div class="schedule-day {% if day == today %}today{% endif %}">
+      <div class="schedule-day-header">
+        {% for d, name in days_with_names %}
+          {% if d == day %}<div class="day-name">{{ name }}</div>{% endif %}
+        {% endfor %}
+        <div class="day-num">{{ day|date:"j" }}</div>
+        {% if appts %}
+          <div style="font-size:10px; color:var(--primary); margin-top:2px; font-weight:600;">{{ appts|length }}</div>
+        {% endif %}
+      </div>
+      <div style="padding:4px; min-height:80px;">
+        {% for appt in appts %}
+        <div class="schedule-appt status-{{ appt.status }}"
+             onclick="window.location='{% url 'patient_detail' appt.patient.pk %}'"
+             title="{{ appt.patient.full_name }} — {{ appt.service.name }}">
+          <div class="appt-time">{{ appt.time|time:"H:i" }}</div>
+          <div class="appt-name">{{ appt.patient.last_name }} {{ appt.patient.first_name|slice:":1" }}.</div>
+          <div class="appt-name" style="font-size:10px; margin-top:1px; opacity:0.8;">{{ appt.service.name|truncatechars:18 }}</div>
+        </div>
+        {% empty %}
+        <div style="height:60px; display:flex; align-items:center; justify-content:center;">
+          <span style="font-size:11px; color:var(--border);">вільно</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="flex items-center gap-3" style="margin-top:16px; flex-wrap:wrap;">
+  <span class="text-sm text-muted">Статус:</span>
+  <span class="badge badge-warning">Очікує</span>
+  <span class="badge badge-info">В процесі</span>
+  <span class="badge badge-success">Завершено</span>
+  <span class="badge badge-neutral">Скасовано</span>
+  <span class="text-sm text-muted" style="margin-left:8px;">Клік на запис → картка пацієнта</span>
+</div>
+
+{% endblock %}

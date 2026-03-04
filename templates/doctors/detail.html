@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ doctor.full_name }} — Dental CRM{% endblock %}
+{% block page_title %}{{ doctor.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'doctor_list' %}">Лікарі</a>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-current">{{ doctor.full_name }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+  <div>
+    <div class="card">
+      <div class="card-body">
+        <div style="text-align:center; margin-bottom:20px;">
+          <div class="doctor-avatar" style="margin:0 auto 12px; width:80px; height:80px; font-size:28px;">
+            {% if doctor.photo %}
+              <img src="{{ doctor.photo.url }}" alt="{{ doctor.full_name }}">
+            {% else %}
+              {{ doctor.first_name|slice:":1" }}{{ doctor.last_name|slice:":1" }}
+            {% endif %}
+          </div>
+          <div style="font-family:'Manrope',sans-serif; font-size:17px; font-weight:800;">{{ doctor.full_name }}</div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">{{ doctor.get_specialization_display }}</div>
+          <div style="margin-top:8px;">
+            {% if doctor.is_active %}
+              <span class="badge badge-active">Активний</span>
+            {% else %}
+              <span class="badge badge-inactive">Неактивний</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="info-list">
+          {% if doctor.phone %}
+          <div class="info-item">
+            <span class="info-label">Телефон</span>
+            <span class="info-value">{{ doctor.phone }}</span>
+          </div>
+          {% endif %}
+          {% if doctor.email %}
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ doctor.email }}</span>
+          </div>
+          {% endif %}
+          <div class="info-item">
+            <span class="info-label">Досвід</span>
+            <span class="info-value">{{ doctor.experience_years }} років</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; text-align:center;">
+          <div>
+            <div class="stat-value" style="font-size:22px;">{{ doctor.appointments.count }}</div>
+            <div class="stat-label">Усього прийомів</div>
+          </div>
+          <div>
+            <div class="stat-value" style="font-size:22px;">{{ doctor.appointments.filter.count|default:"0" }}</div>
+            <div class="stat-label">Цього місяця</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Останні прийоми</span>
+    </div>
+    {% if appointments %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Пацієнт</th>
+            <th>Послуга</th>
+            <th>Дата</th>
+            <th>Час</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in appointments %}
+          <tr>
+            <td>
+              <a href="{% url 'patient_detail' appt.patient.pk %}" style="text-decoration:none;">
+                <div class="name-primary" style="color:var(--primary);">{{ appt.patient.full_name }}</div>
+              </a>
+            </td>
+            <td>{{ appt.service.name }}</td>
+            <td>{{ appt.date|date:"d.m.Y" }}</td>
+            <td>{{ appt.time|time:"H:i" }}</td>
+            <td>
+              {% if appt.status == 'completed' %}
+                <span class="badge badge-success">Завершено</span>
+              {% elif appt.status == 'pending' %}
+                <span class="badge badge-warning">Очікує</span>
+              {% elif appt.status == 'in_progress' %}
+                <span class="badge badge-info">В процесі</span>
+              {% else %}
+                <span class="badge badge-neutral">Скасовано</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Прийомів ще немає</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

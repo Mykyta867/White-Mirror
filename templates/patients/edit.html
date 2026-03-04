@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Редагувати — {{ patient.full_name }}{% endblock %}
+{% block page_title %}Редагувати пацієнта{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'patient_list' %}">Пацієнти</a>
+  <span class="breadcrumb-sep">›</span>
+  <a href="{% url 'patient_detail' patient.pk %}">{{ patient.full_name }}</a>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-current">Редагувати</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Дані пацієнта</span>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Прізвище <span>*</span></label>
+            {{ form.last_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ім'я <span>*</span></label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">По батькові</label>
+            {{ form.patronymic }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Телефон <span>*</span></label>
+            {{ form.phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Дата народження</label>
+            {{ form.date_of_birth }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Адреса</label>
+            {{ form.address }}
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Примітки</label>
+            {{ form.notes }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border-light);">
+        <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-outline">Скасувати</a>
+        <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
