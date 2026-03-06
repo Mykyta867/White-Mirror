@@ -1,4 +1,4 @@
-# 🦷 Dental CRM — Адмін-панель стоматологічної клініки
+# 🦷 White-Mirror — Адмін-панель стоматологічної клініки
 
 Django-based CRM система для управління стоматологічною клінікою.
 
@@ -55,8 +55,8 @@ Django Admin: http://127.0.0.1:8000/admin/
 ## Структура проекту
 
 ```
-dental_crm/
-├── dental_crm/          # Налаштування Django
+White-Mirror/
+├── White-Mirror/          # Налаштування Django
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
